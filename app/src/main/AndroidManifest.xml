@@ -183,6 +183,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.healthmanagement.diabetesassistant.activities.MainActivity" />
         </activity>
+        <activity
+            android:name=".activities.ViewFoodListingsActivity"
+            android:label="@string/view_latest_entry"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.healthmanagement.diabetesassistant.activities.LogMealActivity" />
+        </activity>
+
     </application>
 
 </manifest>

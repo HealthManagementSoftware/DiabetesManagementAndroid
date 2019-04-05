@@ -45,6 +45,9 @@
     <string name="view_latest_entry">View Latest</string>
     <string name="view_entry_history">View History</string>
     <string name="Plus">+</string>
+    <string name="Question_Mark">?</string>
+    <string name="AcceptButton">Accept</string>
+    <string name="BackButton">Back</string>
 
     <!-- Strings related to Settings -->
 
