@@ -1,5 +1,6 @@
 package com.healthmanagement.diabetesassistant.activities;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -47,7 +48,18 @@ public class ViewMealEntryHistoryActivity extends AppCompatActivity
 		// Initialize loader to handle calls to ContentProvider
 		getSupportLoaderManager().initLoader( loaderIndex, null, this );
 
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	private void showListview()

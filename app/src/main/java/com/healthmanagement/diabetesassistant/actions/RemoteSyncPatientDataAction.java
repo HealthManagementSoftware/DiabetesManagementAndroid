@@ -43,21 +43,22 @@ public class RemoteSyncPatientDataAction implements ISyncPatientDataAction
 			//			if( cursor != null )
 			//				cursor.close();
 
-			JSONObject jsonPatient = PatientSingleton.toJSONObject( SyncStatus.UNSYNCED );
+			JSONObject jsonPatient = DEBUG ? PatientSingleton.toJSONObject( SyncStatus.ALL )
+					: PatientSingleton.toJSONObject( SyncStatus.UNSYNCED );
 			//HashMap<String, String> hashMap = JsonUtilities.toMap( jsonPatient );	// OLD method
 			if( DEBUG ) Log.e( LOG_TAG, "Json: " + jsonPatient.toString() );
 
 			if( conn.networkIsAvailable() )
 			{
-				// Sync all of the unsynced data:
+				// Sync all of the un-synced data:
 				returnString = conn.sendSyncPatientDataRequest( jsonPatient );
 				if( DEBUG ) Log.e( LOG_TAG, "Server returned: " + returnString );
 
 				ErrorCode returnCode = ErrorCode.interpretErrorCode( returnString );
 				if( returnCode == ErrorCode.INVALID_LOGIN_TOKEN )
 					PatientSingleton.eraseData();    	// Log out
-				else if( returnCode == ErrorCode.NO_ERROR )
-					patientRepository.setAllSynced();	// Set all unsynced to now synced
+				else if( returnCode == ErrorCode.NO_ERROR && !DEBUG ) // ONLY if not debugging:
+					patientRepository.setAllSynced();			// Set all un-synced to now synced
 
 			} // if
 			else

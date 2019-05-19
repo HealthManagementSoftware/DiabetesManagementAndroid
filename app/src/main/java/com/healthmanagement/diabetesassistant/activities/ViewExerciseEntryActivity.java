@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.healthmanagement.diabetesassistant.repositories.DbExerciseEntryRepository;
 import com.healthmanagement.diabetesassistant.models.ExerciseEntry;
+import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -90,6 +91,17 @@ public class ViewExerciseEntryActivity extends AppCompatActivity
 
 		} // if
 
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 } // class

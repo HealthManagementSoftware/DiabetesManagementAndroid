@@ -41,8 +41,7 @@ public class Doctor extends ApplicationUser
 
 	public static Doctor fromJSONObject( JSONObject drObj ) throws JSONException
 	{
-		Doctor doctor =
-				new Doctor();                       // Create a new doctor object
+		Doctor doctor = new Doctor();                       // Create a new doctor object
 
 		if( drObj != null )
 		{

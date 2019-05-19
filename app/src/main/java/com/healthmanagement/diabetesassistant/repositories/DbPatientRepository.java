@@ -21,13 +21,16 @@ import android.os.AsyncTask;
 
 import com.healthmanagement.diabetesassistant.contentproviders.DAContentProvider;
 import com.healthmanagement.diabetesassistant.db.DB;
+import com.healthmanagement.diabetesassistant.dependencies.Dependencies;
 import com.healthmanagement.diabetesassistant.models.ApplicationUser;
+import com.healthmanagement.diabetesassistant.models.PatientSignedHIPAANotice;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IApplicationUserRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IDoctorRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IExerciseEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IGlucoseEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IMealEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IPatientRepository;
+import com.healthmanagement.diabetesassistant.repositories.interfaces.IPatientSignedHIPAARepository;
 import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 
 import java.util.ArrayList;
@@ -44,17 +47,21 @@ public class DbPatientRepository implements IPatientRepository
 	private IGlucoseEntryRepository                     glucoseEntryRepository;
 	private IMealEntryRepository                        mealEntryRepository;
 	private IExerciseEntryRepository                    exerciseEntryRepository;
+	private IPatientSignedHIPAARepository			    patientSignedHIPAARepository;
 
 
 	public DbPatientRepository( Context context )
 	{
 		this.context = context;
 		contentResolver = context.getContentResolver();
+		// Note: these must be instantiated without using Dependencies because this class
+		// is instantiated in the Dependencies class.
 		doctorRepository = new DbDoctorRepository( context );
 		applicationUserRepository = new DbApplicationUserRepository( context );
 		glucoseEntryRepository = new DbGlucoseEntryRepository( context );
 		mealEntryRepository = new DbMealEntryRepository( context );
 		exerciseEntryRepository = new DbExerciseEntryRepository( context );
+		patientSignedHIPAARepository = new DbPatientSignedHIPAARepository( context );
 
 	} // constructor
 
@@ -176,7 +183,6 @@ public class DbPatientRepository implements IPatientRepository
 				null, DB.KEY_USERNAME + "=?",
 				new String[]{ username }, null );
 		readFromCursor( patientSingleton, patientCursor );
-		applicationUserRepository.readFromCursor( patientSingleton, patientCursor );     // appUser
 
 		return patientSingleton;
 
@@ -214,6 +220,8 @@ public class DbPatientRepository implements IPatientRepository
 						doctorRepository.read( patientSingleton.getDoctorUserName() ) );
 			applicationUserRepository.readFromCursor( patientSingleton, cursor );
 
+            cursor.close();
+
 			// Attach the patient's entries:
 			// NOTE: This should be done in readFromCursor() to allow for passing
 			//		a cursor in directly.
@@ -224,14 +232,20 @@ public class DbPatientRepository implements IPatientRepository
 			patientSingleton.setMealEntries( mealEntryRepository.readAll(
 					patientSingleton.getUserName() ) );
 
-			cursor.close();
+            PatientSignedHIPAANotice signedNotice = patientSignedHIPAARepository.read(
+                    patientSingleton.getUserName() );
+            if( signedNotice != null )
+            {
+                patientSingleton.setPatientSignedHIPAANoticeId( signedNotice.getRemoteId() );
+                patientSingleton.setPatientSignedHIPAANotice( signedNotice );
+
+            } // if
 
 			return patientSingleton;
 
 		} // if
 
 		return null;
-
 
 	} // readFromCursor
 
@@ -241,6 +255,8 @@ public class DbPatientRepository implements IPatientRepository
 	{
 		ContentValues values = new ContentValues();
 		values.put( DB.KEY_DR_USERNAME, patient.getDoctorUserName() );
+		values.put( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE_ID,
+                patient.getPatientSignedHIPAANoticeId() );
 		return values;
 
 	} // putContentValues

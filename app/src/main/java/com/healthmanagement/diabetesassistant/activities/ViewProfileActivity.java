@@ -47,7 +47,18 @@ public class ViewProfileActivity extends AppCompatActivity
 			}
 		} );
 
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	@Override

@@ -1,5 +1,6 @@
 package com.healthmanagement.diabetesassistant.activities;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -18,6 +19,7 @@ import com.healthmanagement.diabetesassistant.R;
 import com.healthmanagement.diabetesassistant.adapters.ExerciseCursorAdapter;
 import com.healthmanagement.diabetesassistant.contentproviders.DAContentProvider;
 import com.healthmanagement.diabetesassistant.db.DB;
+import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 
 import static com.healthmanagement.diabetesassistant.activities.MainActivity.DEBUG;
 
@@ -51,7 +53,18 @@ public class ViewExerciseHistoryActivity extends AppCompatActivity
 		TextView header3 = findViewById( R.id.header3 );
 		header3.setText( R.string.date );
 
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	/**

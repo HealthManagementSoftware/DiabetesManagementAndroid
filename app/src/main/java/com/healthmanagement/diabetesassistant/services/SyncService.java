@@ -70,8 +70,8 @@ public class SyncService extends Service
 
 		// UNCOMMENT TO SYNC WHEN DATA CHANGES IN ANY OF THE TABLES: (Caution: Causes constant syncing!!)
 		// NOTE: This will currently cause recursive calls due to table updates after syncing
-		//if( DEBUG )
-		//	setToSyncWhenTablesChange();
+		if( DEBUG )	// ONLY if debugging, because is set to update tables if not.
+			setToSyncWhenTablesChange();
 
 		// Allow account to sync:
 		ContentResolver.setIsSyncable( mAccount, DAContentProvider.AUTHORITY, 1 );

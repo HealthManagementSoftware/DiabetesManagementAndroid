@@ -235,12 +235,12 @@ public class DbMealEntryRepository implements IMealEntryRepository
 	public void update( int id, MealEntry item )
 	{
 		item.setUpdatedAt( new Date() );
-		contentResolver.update( uriEntries, putContentValues( item ),        // Update the MealEntry
+		contentResolver.update( uriEntries, putContentValues( item ),       // Update the MealEntry
 				DB.KEY_ID + "=?", new String[]{ String.valueOf( id ) } );
 
-		if( item.getMealItems() != null && item.getMealItems().size() > 0 )    // If !null
+		if( item.getMealItems() != null && item.getMealItems().size() > 0 ) // If !null
 			for( MealItem mealItem : item.getMealItems() )
-				updateMealItem( mealItem.getRemoteId(), mealItem );                // Also update mealItems
+				updateMealItem( mealItem.getRemoteId(), mealItem );         // Also update mealItems
 
 	} // update
 

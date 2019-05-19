@@ -93,6 +93,9 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		Button viewLatestEntryButton = findViewById( R.id.button_view_latest );
 		viewLatestEntryButton.setOnTouchListener( this );   // Add listener to latest entry btn
 
+		Button viewHistoryButton = findViewById( R.id.button_view_history );
+		viewHistoryButton.setOnTouchListener( this );   // Add listener to latest entry btn
+
 		Button submitButton = findViewById( R.id.button_save );
 		submitButton.setOnTouchListener( this );            // Add listener to save button
 
@@ -122,7 +125,18 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		allServingNameEntries.add( (EditText) tableRow.findViewById( R.id.edit_serving_name ) );
 		allCarbEntries.add( (EditText) tableRow.findViewById( R.id.edit_carbs ) );
 
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	@Override
@@ -162,7 +176,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 				case R.id.remove_meal_item_button:
 					removeParentTableRow( view );               // Remove row containing the button
-					resetTags();                                // To allow indexing/performing actions
+					resetTags();                                // Allow indexing/performing actions
 					break;
 
 				case R.id.search_meal_item_button:

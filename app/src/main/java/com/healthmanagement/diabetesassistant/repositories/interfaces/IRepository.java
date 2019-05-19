@@ -45,9 +45,9 @@ public interface IRepository<T>
 
 	void update( int id, T item );
 
-	void delete( T item );
+	void delete( T item ) throws Exception;
 
-	void delete( int id );
+	void delete( int id ) throws Exception;
 
 	void setAllSynced();
 

@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.healthmanagement.diabetesassistant.repositories.DbGlucoseEntryRepository;
 import com.healthmanagement.diabetesassistant.models.GlucoseEntry;
+import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 
 import java.util.ArrayList;
 
@@ -77,5 +78,17 @@ public class ViewGlucoseEntryActivity extends AppCompatActivity
 			beforeAfter.setText( glucoseEntry.getBeforeAfter().toString() );
 		}
 
-	}
-}
+		if( !PatientSingleton.hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
+	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
+
+} // class
