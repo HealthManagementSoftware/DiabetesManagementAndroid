@@ -55,7 +55,7 @@ public class RemoteLoginAction implements ILoginAction
 		// Login was successful, so enter into the db:
 		DbPatientRepository patientRepository = new DbPatientRepository( context );
 		patientSingleton.setLoggedIn( true );
-		PatientSingleton.copyFrom( stringResponse );          // Set patient's values from server
+		PatientSingleton.copyFrom( stringResponse );        // Set patient's values from server
 		patientRepository.create( patientSingleton );       // ...and insert into db
 
 		return ErrorCode.NO_ERROR;

@@ -125,7 +125,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		allServingNameEntries.add( (EditText) tableRow.findViewById( R.id.edit_serving_name ) );
 		allCarbEntries.add( (EditText) tableRow.findViewById( R.id.edit_carbs ) );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate
@@ -308,7 +308,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 			String txt = carbEditText.getText().toString();
 			try
 			{
-				carbs = Integer.parseInt( txt );
+				carbs = Math.round( Float.parseFloat( txt ));
 			}
 			catch( Exception e )
 			{

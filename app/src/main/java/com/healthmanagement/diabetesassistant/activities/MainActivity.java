@@ -235,11 +235,11 @@ public class MainActivity
             stopService( new Intent( getApplicationContext(), SyncService.class ) );
         startService( new Intent( getApplicationContext(), SyncService.class ) );
 
-        // Restart the pedometer service:
+        // Pedometer service is more complicated. First set its action:
         Intent pedometerIntent = new Intent( getApplicationContext(), PedometerService.class );
         pedometerIntent.setAction( PedometerService.ACTION_START );
 
-        // Stop the service if it is running:
+        // Then stop the service if it is running:
         if( serviceIsRunning( getApplicationContext(), PedometerService.class ) )
         {
             doUnbindPedometer();   // Service won't stop if still bound to UI
@@ -248,7 +248,7 @@ public class MainActivity
 
         } // if
 
-        // Start the service again, only if user wants to track steps:
+        // Finally, start the service again, only if user wants to track steps:
         if( PatientSingleton.getInstance().isLoggedIn() && trackSteps( getApplicationContext() ) )
         {
             if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O )
@@ -629,7 +629,7 @@ public class MainActivity
         // Start the login activity if not logged in:
         if( !PatientSingleton.getInstance().isLoggedIn() )
             startLoginActivity();
-        else if( !PatientSingleton.hasSignedHIPAANotice() )
+        else if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
             startSignHIPAANoticeActivity();
 
     } // onLoadFinished

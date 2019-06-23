@@ -164,7 +164,7 @@ public class UrlConnection
 	 */
 	public String performRequest( JSONObject postDataParams )
 	{
-		if( DEBUG ) Log.e( LOG_TAG, "performRequest parameters: " + postDataParams.toString() );
+		if( DEBUG ) Log.e( LOG_TAG, "URL: " + url.toString() + "; performRequest parameters: " + postDataParams.toString() );
 
 		StringBuilder responseStringBuilder = new StringBuilder();
 		try

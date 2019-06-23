@@ -115,7 +115,7 @@ public class LogGlucoseActivity extends AppCompatActivity
 			}
 		} );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

@@ -7,7 +7,10 @@ import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 public class PatientSignedHIPAANotice implements Syncable
@@ -32,6 +35,26 @@ public class PatientSignedHIPAANotice implements Syncable
         synced = false;
 
     } // constructor
+
+    public static PatientSignedHIPAANotice copyFrom( String string ) throws JSONException
+    {
+        JSONObject jObj = new JSONObject( string );
+        PatientSignedHIPAANotice notice = new PatientSignedHIPAANotice();
+        if( jObj.has( DB.KEY_REMOTE_ID )
+                && !jObj.getString( DB.KEY_REMOTE_ID ).isEmpty()
+                && !jObj.getString( DB.KEY_REMOTE_ID ).equals( "null" ) )
+            notice.setRemoteId( DB.KEY_REMOTE_ID );
+        if( jObj.has( DB.KEY_NOTICE_ID )
+                && !jObj.getString( DB.KEY_NOTICE_ID ).isEmpty()
+                && !jObj.getString( DB.KEY_NOTICE_ID ).equals( "null" ) )
+            notice.setNoticeId( jObj.getString( DB.KEY_NOTICE_ID ) );
+        if( jObj.has( DB.KEY_PATIENT_ID )
+                && !jObj.getString( DB.KEY_PATIENT_ID ).isEmpty()
+                && !jObj.getString( DB.KEY_PATIENT_ID ).equals( "null" ) )
+            notice.setPatientId( jObj.getString( DB.KEY_PATIENT_ID ) );
+        return notice;
+
+    } // copyFrom
 
 
     public int getId()
@@ -94,12 +117,12 @@ public class PatientSignedHIPAANotice implements Syncable
         this.noticeId = noticeId;
     }
 
-    public com.healthmanagement.diabetesassistant.models.HIPAAPrivacyNotice getHIPAAPrivacyNotice()
+    public HIPAAPrivacyNotice getHIPAAPrivacyNotice()
     {
         return HIPAAPrivacyNotice;
     }
 
-    public void setHIPAAPrivacyNotice( com.healthmanagement.diabetesassistant.models.HIPAAPrivacyNotice HIPAAPrivacyNotice )
+    public void setHIPAAPrivacyNotice( HIPAAPrivacyNotice HIPAAPrivacyNotice )
     {
         this.HIPAAPrivacyNotice = HIPAAPrivacyNotice;
     }
@@ -141,16 +164,26 @@ public class PatientSignedHIPAANotice implements Syncable
     {
         JSONObject signedHIPAANotice = new JSONObject();
 
+        if( remoteId != null && !remoteId.isEmpty() )
+            signedHIPAANotice.put( DB.KEY_REMOTE_ID, remoteId );
         if( patientId != null && !patientId.isEmpty() )
             signedHIPAANotice.put( DB.KEY_PATIENT_ID, patientId );
         if( patientUserName != null && !patientUserName.isEmpty() )
             signedHIPAANotice.put( DB.KEY_PATIENT_USER_NAME, patientUserName );
         if( noticeId != null && !noticeId.isEmpty() )
             signedHIPAANotice.put( DB.KEY_NOTICE_ID, noticeId );
-        if( signedAt != null )
-            signedHIPAANotice.put( DB.KEY_SIGNED_AT, signedAt );
-        if( updatedAt != null )
-            signedHIPAANotice.put( DB.KEY_UPDATED_AT, updatedAt );
+        try
+        {
+            DateFormat df = new SimpleDateFormat( "MM/dd/yyyy HH:mm a", Locale.US );
+            if( signedAt != null )
+                signedHIPAANotice.put( DB.KEY_CREATED_AT, df.format( signedAt ) );
+            if( updatedAt != null )
+                signedHIPAANotice.put( DB.KEY_UPDATED_AT, df.format( updatedAt ) );
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+        }
 
         return signedHIPAANotice;
 

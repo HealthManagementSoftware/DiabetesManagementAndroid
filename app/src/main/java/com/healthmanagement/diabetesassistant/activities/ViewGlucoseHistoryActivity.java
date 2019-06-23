@@ -52,7 +52,7 @@ public class ViewGlucoseHistoryActivity extends AppCompatActivity
 		TextView header4 = findViewById( R.id.header4 );
 		header4.setText( R.string.date );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

@@ -84,10 +84,10 @@ public class PatientSingleton extends ApplicationUser
     } // getInstance
 
 
-    public static boolean hasSignedHIPAANotice()
+    public boolean hasSignedHIPAANotice()
     {
-        return getInstance().getPatientSignedHIPAANotice() != null
-                && getInstance().getPatientSignedHIPAANotice().getNoticeId() != null;
+        return getPatientSignedHIPAANotice() != null
+                && getPatientSignedHIPAANotice().getNoticeId() != null;
 
     } // hasSignedHIPAANotice
 
@@ -191,6 +191,14 @@ public class PatientSingleton extends ApplicationUser
                         .isEmpty() )
                     patientSingleton.setPatientSignedHIPAANoticeId( jsonObject.getString(
                             DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE_ID ) );
+
+                if( jsonObject.has( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE ) )
+                {
+                    PatientSignedHIPAANotice signed =
+                            PatientSignedHIPAANotice.copyFrom(
+                                    jsonObject.getString( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE ) );
+                    patientSingleton.setPatientSignedHIPAANotice( signed );
+                }
 
             } // if !null
 
@@ -415,8 +423,8 @@ public class PatientSingleton extends ApplicationUser
 
         if( patient.getPatientSignedHIPAANotice() != null )
         {
-            json.put( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE_ID,
-                    patient.getPatientSignedHIPAANotice().getId() );
+//            json.put( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE_ID,
+//                    patient.getPatientSignedHIPAANotice().getRemoteId() );
             json.put( DB.KEY_PATIENT_SIGNED_HIPAA_NOTICE, patient.getPatientSignedHIPAANotice()
                     .toJSONObject() );
 

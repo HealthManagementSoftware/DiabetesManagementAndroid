@@ -167,6 +167,9 @@ public class DbPatientRepository implements IPatientRepository
 
 		} // if
 
+        if( patientSingleton.getPatientSignedHIPAANotice() != null )
+            patientSignedHIPAARepository.create( patientSingleton.getPatientSignedHIPAANotice() );
+
 		// Now insert the "users" information:
 		boolean userInserted = applicationUserRepository.create( patientSingleton );
 

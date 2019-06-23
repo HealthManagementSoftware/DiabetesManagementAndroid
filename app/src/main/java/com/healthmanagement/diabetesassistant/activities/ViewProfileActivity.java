@@ -47,7 +47,7 @@ public class ViewProfileActivity extends AppCompatActivity
 			}
 		} );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

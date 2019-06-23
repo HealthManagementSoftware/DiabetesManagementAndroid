@@ -107,7 +107,7 @@ public class LogExerciseActivity extends AppCompatActivity
 			}
 		} );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

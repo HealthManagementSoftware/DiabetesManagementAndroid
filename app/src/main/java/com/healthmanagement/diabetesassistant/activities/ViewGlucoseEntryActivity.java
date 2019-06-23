@@ -78,7 +78,7 @@ public class ViewGlucoseEntryActivity extends AppCompatActivity
 			beforeAfter.setText( glucoseEntry.getBeforeAfter().toString() );
 		}
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

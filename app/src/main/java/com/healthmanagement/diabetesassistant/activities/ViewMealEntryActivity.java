@@ -64,7 +64,7 @@ public class ViewMealEntryActivity extends AppCompatActivity
 			newest = new MealEntry();
 		}
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

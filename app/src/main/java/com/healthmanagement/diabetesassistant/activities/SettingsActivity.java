@@ -254,7 +254,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 		//				SettingsActivity.PREF_SHOW_NOTIFICATION ) );
 
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // restartWebClient

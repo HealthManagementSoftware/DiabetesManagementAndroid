@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DB extends SQLiteOpenHelper
 {
     // Database Version
-    private static final int DATABASE_VERSION = 20;
+    private static final int DATABASE_VERSION = 21;
 
     // DB Name:
     public static final String DB_NAME = "myglucose";
@@ -167,7 +167,8 @@ public class DB extends SQLiteOpenHelper
                 + TABLE_PATIENTS + "("
                 + KEY_USERNAME + " TEXT PRIMARY KEY,"
                 + KEY_DR_ID + " TEXT, "
-                + KEY_DR_USERNAME + " TEXT );";
+                + KEY_DR_USERNAME + " TEXT, "
+                + KEY_PATIENT_SIGNED_HIPAA_NOTICE_ID + " TEXT );";
 
         // CREATE DOCTORS TABLE
         String CREATE_DOCTORS_TABLE = "CREATE TABLE "

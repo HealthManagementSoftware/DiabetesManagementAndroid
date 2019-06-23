@@ -48,7 +48,7 @@ public class ViewMealEntryHistoryActivity extends AppCompatActivity
 		// Initialize loader to handle calls to ContentProvider
 		getSupportLoaderManager().initLoader( loaderIndex, null, this );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

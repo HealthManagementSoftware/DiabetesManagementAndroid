@@ -53,7 +53,7 @@ public class ViewExerciseHistoryActivity extends AppCompatActivity
 		TextView header3 = findViewById( R.id.header3 );
 		header3.setText( R.string.date );
 
-		if( !PatientSingleton.hasSignedHIPAANotice() )
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
 			startSignHIPAANoticeActivity();
 
 	} // onCreate

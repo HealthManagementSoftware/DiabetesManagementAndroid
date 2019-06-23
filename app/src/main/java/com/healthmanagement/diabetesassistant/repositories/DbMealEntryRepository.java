@@ -66,7 +66,7 @@ public class DbMealEntryRepository implements IMealEntryRepository
 		mealEntry.setTotalCarbs( totalCarbs );                      // Set the calculated carbs
 
 		// Insert into the database:
-		contentResolver.insert( uriEntries, putContentValues( mealEntry ) );
+		contentResolver.insert( DAContentProvider.MEAL_ENTRIES_URI, putContentValues( mealEntry ) );
 
 		if( mealEntry.getMealItems() != null && mealEntry.getMealItems().size() > 0 )
 		{
