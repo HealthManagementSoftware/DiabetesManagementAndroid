@@ -8,26 +8,33 @@ import com.healthmanagement.diabetesassistant.actions.DbLogMealEntryAction;
 import com.healthmanagement.diabetesassistant.actions.RemoteLoginAction;
 import com.healthmanagement.diabetesassistant.actions.RemoteRegisterPatientAction;
 import com.healthmanagement.diabetesassistant.actions.RemoteRetrieveDoctorsAction;
+import com.healthmanagement.diabetesassistant.actions.RemoteRetrieveNewestHIPAANoticeAction;
+import com.healthmanagement.diabetesassistant.actions.RemoteRetrieveNewestHIPAAVersionAction;
 import com.healthmanagement.diabetesassistant.actions.RemoteSyncPatientDataAction;
-import com.healthmanagement.diabetesassistant.actions.SimulateRegisterPatientAction;
-import com.healthmanagement.diabetesassistant.actions.SimulateRetrieveDoctorsAction;
+import com.healthmanagement.diabetesassistant.actions.SimulateRetrieveNewestHIPAANoticeAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ILogExerciseEntryAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ILogGlucoseEntryAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ILogMealEntryAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ILoginAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.IRegisterPatientAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.IRetrieveDoctorsAction;
+import com.healthmanagement.diabetesassistant.actions.interfaces.IRetrieveNewestHIPAANoticeAction;
+import com.healthmanagement.diabetesassistant.actions.interfaces.IRetrieveNewestHIPAAVersionAction;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ISyncPatientDataAction;
 import com.healthmanagement.diabetesassistant.repositories.DbApplicationUserRepository;
 import com.healthmanagement.diabetesassistant.repositories.DbDoctorRepository;
 import com.healthmanagement.diabetesassistant.repositories.DbExerciseEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.DbGlucoseEntryRepository;
+import com.healthmanagement.diabetesassistant.repositories.DbHIPAAPrivacyNoticeRepository;
 import com.healthmanagement.diabetesassistant.repositories.DbMealEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.DbPatientRepository;
+import com.healthmanagement.diabetesassistant.repositories.DbPatientSignedHIPAARepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IApplicationUserRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IDoctorRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IExerciseEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IGlucoseEntryRepository;
+import com.healthmanagement.diabetesassistant.repositories.interfaces.IHIPAANoticeRepository;
+import com.healthmanagement.diabetesassistant.repositories.interfaces.IPatientSignedHIPAARepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IMealEntryRepository;
 import com.healthmanagement.diabetesassistant.repositories.interfaces.IPatientRepository;
 
@@ -42,56 +49,51 @@ class ObjectGraph
 
 	ObjectGraph( Context context )    // package-private
 	{
-		/*
-			Step 1.  create dependency graph:
-		 */
-
 		// Log Actions:
 		ILogMealEntryAction logMealEntryAction = new DbLogMealEntryAction();
+		dependencies.put( ILogMealEntryAction.class, logMealEntryAction );
 		ILogExerciseEntryAction logExerciseEntryAction = new DbLogExerciseEntryAction();
+		dependencies.put( ILogExerciseEntryAction.class, logExerciseEntryAction );
 		ILogGlucoseEntryAction logGlucoseEntryAction = new DbLogGlucoseEntryAction();
+		dependencies.put( ILogGlucoseEntryAction.class, logGlucoseEntryAction );
 
 		// Sync Actions:
 		ISyncPatientDataAction syncPatientDataAction = new RemoteSyncPatientDataAction();
+		dependencies.put( ISyncPatientDataAction.class, syncPatientDataAction );
 
 		// Misc. Remote Actions:
 		ILoginAction remoteLoginAction = new RemoteLoginAction();
-		IRetrieveDoctorsAction retrieveDoctorsAction = new RemoteRetrieveDoctorsAction(); //RetrieveDoctorsAction();
-		IRegisterPatientAction registerPatientAction = new RemoteRegisterPatientAction(); //RemoteRegisterPatientAction();
-
-		// Repositories:
-		IPatientRepository patientRepository = new DbPatientRepository( context );
-		IApplicationUserRepository userRepository = new DbApplicationUserRepository( context );
-		IDoctorRepository doctorRepository = new DbDoctorRepository( context );
-		IExerciseEntryRepository exerciseEntryRepository = new DbExerciseEntryRepository( context );
-		IGlucoseEntryRepository glucoseEntryRepository = new DbGlucoseEntryRepository( context );
-		IMealEntryRepository mealEntryRepository = new DbMealEntryRepository( context );
-
-
-		/*
-			Step 2. add models which you will need later to a dependencies map
-		 */
-
-		// Log actions:
-		dependencies.put( ILogMealEntryAction.class, logMealEntryAction );
-		dependencies.put( ILogExerciseEntryAction.class, logExerciseEntryAction );
-		dependencies.put( ILogGlucoseEntryAction.class, logGlucoseEntryAction );
-
-		// Sync actions:
-		dependencies.put( ISyncPatientDataAction.class, syncPatientDataAction );
-
-		// Remote Actions:
 		dependencies.put( ILoginAction.class, remoteLoginAction );
-		dependencies.put( IRegisterPatientAction.class, registerPatientAction );
+		IRetrieveDoctorsAction retrieveDoctorsAction = new RemoteRetrieveDoctorsAction(); //RetrieveDoctorsAction();
 		dependencies.put( IRetrieveDoctorsAction.class, retrieveDoctorsAction );
+		IRegisterPatientAction registerPatientAction = new RemoteRegisterPatientAction(); //RemoteRegisterPatientAction();
+		dependencies.put( IRegisterPatientAction.class, registerPatientAction );
+		IRetrieveNewestHIPAANoticeAction retrieveNewestHIPAANoticeAction =
+				new RemoteRetrieveNewestHIPAANoticeAction();
+		dependencies.put( IRetrieveNewestHIPAANoticeAction.class, retrieveNewestHIPAANoticeAction );
+		IRetrieveNewestHIPAAVersionAction retrieveNewestHIPAAVersionAction =
+				new RemoteRetrieveNewestHIPAAVersionAction();
+		dependencies.put( IRetrieveNewestHIPAAVersionAction.class, retrieveNewestHIPAAVersionAction );
 
 		// Repositories:
-		dependencies.put( IPatientRepository.class, patientRepository );
-		dependencies.put( IApplicationUserRepository.class, userRepository );
-		dependencies.put( IDoctorRepository.class, doctorRepository );
+		// Note: Instantiate in order from leaf nodes to parent nodes.
+		IExerciseEntryRepository exerciseEntryRepository = new DbExerciseEntryRepository( context );
 		dependencies.put( IExerciseEntryRepository.class, exerciseEntryRepository );
+		IGlucoseEntryRepository glucoseEntryRepository = new DbGlucoseEntryRepository( context );
 		dependencies.put( IGlucoseEntryRepository.class, glucoseEntryRepository );
+		IMealEntryRepository mealEntryRepository = new DbMealEntryRepository( context );
 		dependencies.put( IMealEntryRepository.class, mealEntryRepository );
+		IHIPAANoticeRepository ihipaaNoticeRepository = new DbHIPAAPrivacyNoticeRepository( context );
+		dependencies.put( IHIPAANoticeRepository.class, ihipaaNoticeRepository );
+		IPatientSignedHIPAARepository patientSignedHIPAANoticeRepository
+				= new DbPatientSignedHIPAARepository( context );
+		dependencies.put( IPatientSignedHIPAARepository.class, patientSignedHIPAANoticeRepository );
+		IDoctorRepository doctorRepository = new DbDoctorRepository( context );
+		dependencies.put( IDoctorRepository.class, doctorRepository );
+		IApplicationUserRepository userRepository = new DbApplicationUserRepository( context );
+		dependencies.put( IApplicationUserRepository.class, userRepository );
+		IPatientRepository patientRepository = new DbPatientRepository( context );
+		dependencies.put( IPatientRepository.class, patientRepository );
 
 	} // constructor
 

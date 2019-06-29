@@ -34,191 +34,169 @@ import static com.healthmanagement.diabetesassistant.activities.MainActivity.DEB
  */
 public class WebClientConnectionSingleton
 {
-	private static WebClientConnectionSingleton webClientConnection;    // The singleton to provide
+    private static final String                       DEFAULT_HOST = "diabetes-dev.azurewebsites.net";
+    private static final String                       DEFAULT_PORT = "443";
+    private static       WebClientConnectionSingleton webClientConnection;    // The singleton to provide
 
-	private static SharedPreferences sharedPreferences;
-	private static String            host;
-	private static int               port;
-	private static String            protocol;
-	private static boolean use_ssl = true;
+    private static SharedPreferences sharedPreferences;
+    private static String            host;
+    private static int               port;
+    private static String            protocol;
+    private static boolean           use_ssl = true;
 
-	private final static String LOGIN_STRING             = "/API/AccountApi/Login";
-	private final static String REGISTER_STRING          = "/API/AccountApi/Register";
-	private final static String SYNC_GLUCOSE_STRING      = "/API/Glucose/Sync";
-	private final static String SYNC_MEAL_ENTRY_STRING   = "/API/Meal/CreateEntry";
-	private final static String SYNC_MEAL_ITEM_STRING    = "/API/Meal/CreateItem";
-	private final static String SYNC_EXERCISE_STRING     = "/API/Exercise/Sync";
-	private final static String SYNC_PATIENT_DATA_STRING = "/API/Patient/Sync";
-	private final static String RETRIEVE_DOCTORS_STRING  = "/API/Doctor/List";
-	private final Context context;
+    private final static String  LOGIN_STRING             = "/API/AccountApi/Login";
+    private final static String  REGISTER_STRING          = "/API/AccountApi/Register";
+    private final static String  SYNC_PATIENT_DATA_STRING = "/API/Patient/Sync";
+    private final static String  RETRIEVE_DOCTORS_STRING  = "/API/Doctor/List";
+    private final static String  RETRIEVE_HIPAA_V_STRING    = "/API/HIPAAPrivacyNotice/ReadNewestVersion";
+    private final static String  RETRIEVE_HIPAA_STRING    = "/API/HIPAAPrivacyNotice/ReadNewestNotice";
+    private final        Context context;
 
-	private UrlConnection loginConnection;             // The UrlConnections used to
-	private UrlConnection registerConnection;          // 		connect to each URL that
-	private UrlConnection syncGlucoseConnection;       //		may be used throughout the
-	private UrlConnection syncMealEntryConnection;     //		application
-	private UrlConnection syncMealItemConnection;
-	private UrlConnection syncExerciseConnection;
-	private UrlConnection retrieveDoctorsConnection;
-	private UrlConnection syncPatientDataConnection;
-	private String LOG_TAG = getClass().getSimpleName();
+    private UrlConnection loginConnection;             // The UrlConnections used to
+    private UrlConnection registerConnection;          // 		connect to each URL that
+    private UrlConnection retrieveDoctorsConnection;   //		may be used throughout the
+    private UrlConnection syncPatientDataConnection;   //		application
+    private UrlConnection retrieveHIPAAConnection;
+    private UrlConnection retrieveHIPAAVersionConnection;
+    private String        LOG_TAG = getClass().getSimpleName();
 
-	private WebClientConnectionSingleton( Context context ) throws MalformedURLException
-	{
-		this.context = context;
-		reset();
+    private WebClientConnectionSingleton( Context context ) throws MalformedURLException
+    {
+        this.context = context;
+        reset();
 
-	} // constructor
+    } // constructor
 
 
-	public static WebClientConnectionSingleton getInstance( Context context )
-	{
-		if( sharedPreferences == null )
-			sharedPreferences = PreferenceManager.getDefaultSharedPreferences( context );
+    public static WebClientConnectionSingleton getInstance( Context context )
+    {
+        if( sharedPreferences == null )
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences( context );
 
-		// Create the client *only* if it hasn't been created, the host or port has changed
-		if( webClientConnection == null
-				|| use_ssl != sharedPreferences.getBoolean(
-				SettingsActivity.PREF_USE_SSL, true )
-				|| !host.equals( sharedPreferences.getString(
-				SettingsActivity.PREF_HOSTNAME, "localhost" ) )
-				|| port != Integer.parseInt(
-				sharedPreferences.getString( SettingsActivity.PREF_PORT, "8080" ) ) )
-		{
-			try
-			{
-				webClientConnection = new WebClientConnectionSingleton( context );
-			}
-			catch( MalformedURLException e )
-			{
-				e.printStackTrace();
-			}
+        // Create the client *only* if it hasn't been created, the host or port has changed
+        if( webClientConnection == null
+                || use_ssl != sharedPreferences.getBoolean(
+                SettingsActivity.PREF_USE_SSL, true )
+                || !host.equals( sharedPreferences.getString(
+                SettingsActivity.PREF_HOSTNAME, "localhost" ) )
+                || port != Integer.parseInt(
+                sharedPreferences.getString( SettingsActivity.PREF_PORT, "8080" ) ) )
+        {
+            try
+            {
+                webClientConnection = new WebClientConnectionSingleton( context );
+            }
+            catch ( MalformedURLException e )
+            {
+                e.printStackTrace();
+            }
 
-		} // if
+        } // if
 
-		return webClientConnection;             // Otherwise, just return the client
+        return webClientConnection;             // Otherwise, just return the client
 
-	} // getInstance
-
-
-	public boolean networkIsAvailable()
-	{
-		ConnectivityManager cm =
-				(ConnectivityManager) context.getSystemService( Context.CONNECTIVITY_SERVICE );
-		NetworkInfo netInfo = cm != null
-				? cm.getActiveNetworkInfo()
-				: null;
-		return netInfo != null && netInfo.isConnected();
-
-	} // networkIsAvailable
+    } // getInstance
 
 
-	public void reset() throws MalformedURLException
-	{
-		if( DEBUG ) Log.e( LOG_TAG, "Web connection reset!" );
+    public boolean networkIsAvailable()
+    {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService( Context.CONNECTIVITY_SERVICE );
+        NetworkInfo netInfo = cm != null
+                ? cm.getActiveNetworkInfo()
+                : null;
+        return netInfo != null && netInfo.isConnected();
 
-		// We first get our user's preferences
-		sharedPreferences = PreferenceManager.getDefaultSharedPreferences( context );
-		host = sharedPreferences.getString( SettingsActivity.PREF_HOSTNAME, "localhost" );
-		port = Integer.parseInt(
-				sharedPreferences.getString( SettingsActivity.PREF_PORT, "8080" )
-		);
-		use_ssl = sharedPreferences.getBoolean( SettingsActivity.PREF_USE_SSL, true );
-
-		protocol = use_ssl
-				? "https://"
-				: "http://";
-
-		// Instantiate all of the connections to the server that the app will use:
-		String urlString = protocol + host + ":" + port + LOGIN_STRING;
-		loginConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + REGISTER_STRING;
-		registerConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + SYNC_GLUCOSE_STRING;
-		syncGlucoseConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + SYNC_MEAL_ENTRY_STRING;
-		syncMealEntryConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + SYNC_MEAL_ITEM_STRING;
-		syncMealItemConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + SYNC_EXERCISE_STRING;
-		syncExerciseConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + RETRIEVE_DOCTORS_STRING;
-		retrieveDoctorsConnection = new UrlConnection( new URL( urlString ), context );
-
-		urlString = protocol + host + ":" + port + SYNC_PATIENT_DATA_STRING;
-		syncPatientDataConnection = new UrlConnection( new URL( urlString ), context );
-
-	} // reset
+    } // networkIsAvailable
 
 
-	public String sendLoginRequest( HashMap<String, String> values )
-	{
-		return loginConnection.performRequest( values );
+    public void reset() throws MalformedURLException
+    {
+        if( DEBUG ) Log.e( LOG_TAG, "Web connection reset!" );
 
-	} // getHttpJsonResponse
+        // We first get our user's preferences
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences( context );
+        host = sharedPreferences.getString( SettingsActivity.PREF_HOSTNAME, DEFAULT_HOST );
+        port = Integer.parseInt(
+                sharedPreferences.getString( SettingsActivity.PREF_PORT, DEFAULT_PORT )
+        );
+        use_ssl = sharedPreferences.getBoolean( SettingsActivity.PREF_USE_SSL, true );
 
+        protocol = use_ssl
+                ? "https://"
+                : "http://";
 
-	public String sendRegisterRequest( HashMap<String, String> values )
-	{
-		return registerConnection.performRequest( values );
+        // Instantiate all of the connections to the server that the app will use:
+        String urlString = protocol + host + ":" + port + LOGIN_STRING;
+        loginConnection = new UrlConnection( new URL( urlString ), context );
 
-	} // getHttpJsonResponse
+        urlString = protocol + host + ":" + port + REGISTER_STRING;
+        registerConnection = new UrlConnection( new URL( urlString ), context );
 
+        urlString = protocol + host + ":" + port + RETRIEVE_DOCTORS_STRING;
+        retrieveDoctorsConnection = new UrlConnection( new URL( urlString ), context );
 
-	public String sendSyncGlucoseRequest( HashMap<String, String> values )
-	{
-		return syncGlucoseConnection.performRequest( values );
+        urlString = protocol + host + ":" + port + RETRIEVE_HIPAA_STRING;
+        retrieveHIPAAConnection = new UrlConnection( new URL( urlString ), context );
 
-	} // sendSyncGlucoseRequest
+        urlString = protocol + host + ":" + port + RETRIEVE_HIPAA_V_STRING;
+        retrieveHIPAAVersionConnection = new UrlConnection( new URL( urlString ), context );
 
+        urlString = protocol + host + ":" + port + SYNC_PATIENT_DATA_STRING;
+        syncPatientDataConnection = new UrlConnection( new URL( urlString ), context );
 
-	public String sendSyncMealEntryRequest( HashMap<String, String> values )
-	{
-		return syncMealEntryConnection.performRequest( values );
-
-	} // sendSyncMealRequest
-
-
-	public String sendSyncMealItemRequest( HashMap<String, String> values )
-	{
-		return syncMealItemConnection.performRequest( values );
-
-	} // sendSyncMealRequest
-
-
-	public String sendSyncExerciseRequest( HashMap<String, String> values )
-	{
-		return syncExerciseConnection.performRequest( values );
-
-	} // sendSyncExerciseRequest
+    } // reset
 
 
-	public String sendSyncPatientDataRequest( HashMap<String, String> values )
-	{
+    public String sendLoginRequest( HashMap<String, String> values )
+    {
+        return loginConnection.performRequest( values );
 
-		//		if( DEBUG ) Log.e( LOG_TAG, "Values: " + values.toString() );
-		return syncPatientDataConnection.performRequest( values );
-
-	} // sendSyncExerciseRequest
+    } // getHttpJsonResponse
 
 
-	public String sendSyncPatientDataRequest( JSONObject values )
-	{
-		//		if( DEBUG ) Log.e( LOG_TAG, "Values: " + values.toString() );
-		return syncPatientDataConnection.performRequest( values );
+    public String sendRegisterRequest( HashMap<String, String> values )
+    {
+        return registerConnection.performRequest( values );
 
-	} // sendSyncExerciseRequest
+    } // getHttpJsonResponse
 
 
-	public String sendRetrieveDoctorsRequest( HashMap<String, String> values )
-	{
-		return retrieveDoctorsConnection.performRequest( values );
+    public String sendSyncPatientDataRequest( HashMap<String, String> values )
+    {
 
-	} // sendSyncExerciseRequest
+        //		if( DEBUG ) Log.e( LOG_TAG, "Values: " + values.toString() );
+        return syncPatientDataConnection.performRequest( values );
+
+    } // sendSyncExerciseRequest
+
+
+    public String sendSyncPatientDataRequest( JSONObject values )
+    {
+        //		if( DEBUG ) Log.e( LOG_TAG, "Values: " + values.toString() );
+        return syncPatientDataConnection.performRequest( values );
+
+    } // sendSyncExerciseRequest
+
+
+    public String sendRetrieveDoctorsRequest( HashMap<String, String> values )
+    {
+        return retrieveDoctorsConnection.performRequest( values );
+
+    } // sendSyncExerciseRequest
+
+
+    public String sendRetrieveHIPAARequest( HashMap<String, String> values )
+    {
+        return retrieveHIPAAConnection.performRequest( values );
+
+    } // sendSyncExerciseRequest
+
+
+    public String sendRetrieveHIPAAVersionRequest( HashMap<String, String> values )
+    {
+        return retrieveHIPAAVersionConnection.performRequest( values );
+
+    } // sendSyncExerciseRequest
 
 } // class

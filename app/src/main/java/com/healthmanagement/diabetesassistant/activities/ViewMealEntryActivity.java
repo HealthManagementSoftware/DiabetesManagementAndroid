@@ -1,5 +1,6 @@
 package com.healthmanagement.diabetesassistant.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -63,6 +64,17 @@ public class ViewMealEntryActivity extends AppCompatActivity
 			newest = new MealEntry();
 		}
 
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 }

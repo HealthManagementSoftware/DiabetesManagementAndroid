@@ -107,7 +107,18 @@ public class LogExerciseActivity extends AppCompatActivity
 			}
 		} );
 
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	private void startViewLatestExerciseActivity()

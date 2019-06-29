@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -28,6 +29,13 @@ import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.healthmanagement.diabetesassistant.R;
 import com.healthmanagement.diabetesassistant.actions.interfaces.ILogMealEntryAction;
 import com.healthmanagement.diabetesassistant.dependencies.Dependencies;
@@ -45,7 +53,10 @@ import static com.healthmanagement.diabetesassistant.activities.MainActivity.DEB
 public class LogMealActivity extends AppCompatActivity implements View.OnTouchListener
 {
 	private final String LOG_TAG = getClass().getSimpleName();
-	private View                container;                  // The base view (for using Snackbar)
+	public static final String FOOD_LIST = "com.healthmanagment.diabetesassistant.FOOD_LIST";
+	public static final String TAG_LIST = "com.healthmanagment.diabetesassistant.TAG_LIST";
+	private static final int REQUEST_CODE = 2521;
+	private CoordinatorLayout   coordinatorLayout;          // The base view (for using Snackbar)
 	private View                spinner;                    // Shows when submitting
 	private View                mealForm;                   // The view to hide when submitting
 	private Spinner             whichMeal;                  // To select a meal type
@@ -54,8 +65,12 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 	private ArrayList<MealItem> mealItems;                  // Iterable ArrayList of MealItems
 	private ArrayList<EditText> allServingNameEntries;      // Holds all serving name EditTexts
 	private ArrayList<EditText> allCarbEntries;             // Holds all carb entries EditTexts
-	private ArrayList<EditText> allServingNumberEntries;    // Holds all carb entries EditTexts
+	private ArrayList<EditText> allServingNumberEntries;    // Holds all serving entries EditTexts
 	private ArrayList<TableRow> allTableRows;               // Holds all TableRows
+	private String foodName;								// Temporary food name holder until I can think of a better solution
+	private String carbs;									// Temporary carbs holder until I can think of a better solution
+	//private String selectedTag = "N/A";						// Temporary selection holder until I can think of a better solution
+	private int currentTag;									// Temporary tag holder until I can think of a better solution
 
 	// Keep track of the login task to ensure we can cancel it if requested:
 	private LogMealTask mAuthTask = null;
@@ -64,18 +79,13 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
-
-		if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP )
-			setContentView( R.layout.activity_log_meal );
-		else
-			setContentView( R.layout.activity_log_meal_compat );
-
+		setContentView( R.layout.activity_log_meal );
 		Toolbar toolbar = findViewById( R.id.toolbar );
 		setSupportActionBar( toolbar );
 		if( getSupportActionBar() != null )
 			getSupportActionBar().setDisplayHomeAsUpEnabled( true );
 
-		container = findViewById( R.id.top );
+		coordinatorLayout = findViewById( R.id.top );
 
 		// Dependency Injection:
 		logMealEntryAction = Dependencies.get( ILogMealEntryAction.class );
@@ -83,14 +93,17 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		Button viewLatestEntryButton = findViewById( R.id.button_view_latest );
 		viewLatestEntryButton.setOnTouchListener( this );   // Add listener to latest entry btn
 
+		Button viewHistoryButton = findViewById( R.id.button_view_history );
+		viewHistoryButton.setOnTouchListener( this );   // Add listener to latest entry btn
+
 		Button submitButton = findViewById( R.id.button_save );
 		submitButton.setOnTouchListener( this );            // Add listener to save button
 
 		Button addButton = findViewById( R.id.add_meal_item_button );
 		addButton.setOnTouchListener( this );
 
-		Button mHistoryButton = findViewById( R.id.button_view_history );
-		mHistoryButton.setOnTouchListener( this );
+		Button searchButton = findViewById( R.id.search_meal_item_button );
+		searchButton.setOnTouchListener( this );            // Add listener to search button
 
 		spinner = findViewById( R.id.save_spinner );
 		mealForm = findViewById( R.id.meal_form );
@@ -105,22 +118,34 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 		// Add each EditText of the first entry to the ArrayLists:
 		TableRow tableRow = findViewById( R.id.table_row );
+		tableRow.setTag( 0 );							 //set the tag of the first tablerow
 		allTableRows.add( tableRow );                    // Add the first MealItem to the ArrayList
 		// Add the first row of EditTexts:
 		allServingNumberEntries.add( (EditText) tableRow.findViewById( R.id.number_servings ) );
 		allServingNameEntries.add( (EditText) tableRow.findViewById( R.id.edit_serving_name ) );
 		allCarbEntries.add( (EditText) tableRow.findViewById( R.id.edit_carbs ) );
 
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	@Override
 	public boolean onTouch( View view, MotionEvent event )
 	{
-		view.performClick();                                // Perform default action
+		view.performClick();                                    // Perform default action
 		//Log.i( LOG_TAG, "Touch detected: " + view.getId() );
 
-		if( event.getAction() == MotionEvent.ACTION_UP )    // Only handle single event
+		if( event.getAction() == MotionEvent.ACTION_UP )        // Only handle single event
 		{
 			switch( view.getId() )
 			{
@@ -135,8 +160,8 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 				case R.id.button_save:
 					// Create the MealEntry using the MealItems:
 					MealEntry mealEntry =
-							getMealEntryFromInputData();    // Get the data from EditTexts
-					if( mealEntry != null )                 // Null if all fields not valid
+							getMealEntryFromInputData();        // Get the data from EditTexts
+					if( mealEntry != null )                     // Null if all fields not valid
 					{
 						mAuthTask = new LogMealTask( mealEntry );   // Save it to the database
 						mAuthTask.execute();
@@ -145,13 +170,17 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 					break;
 
 				case R.id.add_meal_item_button:
-					TableRow newRow = createTableRow();     // Adds correct views to a new row
-					mealItemTable.addView( newRow );        // Add the row to the layout
+					TableRow newRow = createTableRow();         // Adds correct views to a new row
+					mealItemTable.addView( newRow );            // Add the row to the layout
 					break;
 
 				case R.id.remove_meal_item_button:
-					removeParentTableRow( view );           // Remove row containing the button
-					resetTags();                            // To allow indexing/performing actions
+					removeParentTableRow( view );               // Remove row containing the button
+					resetTags();                                // Allow indexing/performing actions
+					break;
+
+				case R.id.search_meal_item_button:
+					searchFoodItem( getFoodItem( view ) );
 					break;
 
 			} // switch
@@ -223,10 +252,8 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 	@NonNull
 	private EditText createEditText( int meal_item_name, int inputType )
 	{
-		EditText editText = new EditText(
-				new ContextThemeWrapper( this, R.style.EditTextCustomHolo ),
-				null, 0
-		);
+		EditText editText =
+				new EditText( new ContextThemeWrapper( this, R.style.EditTextCustomHolo ), null, 0 );
 		int margin = (int) TypedValue.applyDimension( TypedValue.COMPLEX_UNIT_DIP,
 				8, getResources().getDisplayMetrics() );
 		TableRow.LayoutParams lp = new TableRow.LayoutParams(
@@ -281,7 +308,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 			String txt = carbEditText.getText().toString();
 			try
 			{
-				carbs = Integer.parseInt( txt );
+				carbs = Math.round( Float.parseFloat( txt ));
 			}
 			catch( Exception e )
 			{
@@ -357,6 +384,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		// Create new buttons:
 		Button addButton = createCircleButton( R.id.add_meal_item_button, R.string.Plus );
 		Button removeButton = createCircleButton( R.id.remove_meal_item_button, R.string.minus );
+		Button searchButton = createCircleButton( R.id.search_meal_item_button, R.string.Question_Mark );
 
 		// Add all the EditText view to an ArrayList so that we can iterate
 		//		over them get all of the text entered from them later.
@@ -376,6 +404,7 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 		newRow.addView( newServingNumberEditText );
 		newRow.addView( addButton );
 		newRow.addView( removeButton );
+		newRow.addView( searchButton );
 
 		return newRow;
 
@@ -420,6 +449,21 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 	} // removeParentTableRow
 
+	/**
+	 * getFoodItem - gets the searched food item name
+	 *
+	 * @param view - The view that was clicked
+	 */
+	private String getFoodItem( View view)
+	{
+		EditText servingEntry;								// Holding the edittext for the food name
+		TableRow tableRow = (TableRow) view.getParent();    // The button is a direct child of row
+		int tag = (int) tableRow.getTag();
+		//Log.i("Tag","Got tag " + tag);
+		currentTag = tag;
+		servingEntry = allServingNameEntries.get( tag );
+		return servingEntry.getText().toString();			// Get the food name
+	} // getFoodItem
 
 	/**
 	 * resetTags() - Resets all of the tags of the TableRow objects we have created. This allows
@@ -505,6 +549,17 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 	} // startViewMealEntryHistoryActivity
 
+	/**
+	 * Starts the food item selector
+	 */
+    private void startSelectFoodItem(ArrayList<String> nbdTags, ArrayList<String> foodNames)
+    {
+        Intent intent = new Intent( this, ViewFoodListingsActivity.class );
+        intent.putExtra( FOOD_LIST, foodNames );
+        intent.putExtra( TAG_LIST, nbdTags );
+        startActivityForResult( intent , REQUEST_CODE);
+
+    } // startSelectFoodItem
 
 	/**
 	 * An AsyncTask used to log the meal on a separate thread
@@ -554,20 +609,20 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 			switch( errorCode )
 			{
-				case NO_ERROR:                               // 0: No error
+				case NO_ERROR:                                   // 0: No error
 					Intent returnData = new Intent();
 					returnData.setData( Uri.parse( "meal logged" ) );
-					setResult( RESULT_OK, returnData );      // Return ok result for activity result
-					finish();                                // Close the activity
+					setResult( RESULT_OK, returnData );          // Return ok result for activity result
+					finish();                                    // Close the activity
 					break;
 
-				case UNKNOWN:                                // 1: Unknown - something went wrong
-					Snackbar.make( container, "Unknown error", Snackbar.LENGTH_LONG )
+				case UNKNOWN:                                    // 1: Unknown - something went wrong
+					Snackbar.make( coordinatorLayout, "Unknown error", Snackbar.LENGTH_LONG )
 							.show();
 					break;
 
 				default:
-					Snackbar.make( container, "Error", Snackbar.LENGTH_LONG ).show();
+					Snackbar.make( coordinatorLayout, "Error", Snackbar.LENGTH_LONG ).show();
 					break;
 			}
 
@@ -584,5 +639,112 @@ public class LogMealActivity extends AppCompatActivity implements View.OnTouchLi
 
 	} // LogMealTask
 
+	private void searchFoodItem(String foodItem)
+	{
+		String url = "https://api.nal.usda.gov/ndb/search/?format=json&q="+foodItem+"&sort=r&max=25&offset=0&api_key=ZYcqAYZf16n0t0PSXqXzYV8a5GFxZ9WW8UEC36zm";
+		RequestQueue queue = Volley.newRequestQueue(this);
 
+		StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>()
+		{
+			public void onResponse(String response) {
+				ArrayList<String> nbdTag = new ArrayList<String>();
+				ArrayList<String> foodList = new ArrayList<String>();
+				String text, name;//, nbdTag;
+				int beginning, ending, selected;
+
+				text = response;
+
+				while(text.contains("name")) {
+					beginning = text.indexOf("name") + 8;
+					ending = text.indexOf("\"", beginning);
+					name = text.substring(beginning, ending);
+					ending = name.indexOf(", UPC", 0);
+					if(ending >= 0)
+					{
+						name = name.substring(0, ending);
+					}//remove UPC tag if there
+					name = name.toLowerCase();
+					name = name.substring(0, 1).toUpperCase() + name.substring(1);
+					foodList.add(name);
+
+					beginning = text.indexOf("ndbno") + 9;
+					ending = text.indexOf('"', beginning);
+					nbdTag.add(text.substring(beginning, ending));
+					text = text.substring(ending);
+				}//end while
+
+				startSelectFoodItem(nbdTag, foodList);
+
+				Log.d("Search API Call","Successful search call");
+			}
+		}, new Response.ErrorListener()
+		{
+			public void onErrorResponse(VolleyError error) {
+				Log.e("Search API Call","Error:"+error.getMessage());
+			}
+		});
+
+		stringRequest.setRetryPolicy(new DefaultRetryPolicy(0, -1, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+		queue.add(stringRequest);
+	}//end searchFoodItem(String)
+
+	private void findFoodNutrition(String nbdTag)
+	{
+		String url = "https://api.nal.usda.gov/ndb/V2/reports?";
+		RequestQueue queue = Volley.newRequestQueue(this);
+
+		url +="ndbno="+nbdTag+"&type=b&format=json&api_key=ZYcqAYZf16n0t0PSXqXzYV8a5GFxZ9WW8UEC36zm";
+
+		StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>()
+		{
+			public void onResponse(String response) {
+
+				String text;
+				int beginning, ending;
+
+				text = response;
+
+				beginning = text.indexOf("Carbohydrate");
+
+				beginning = text.indexOf("value", beginning) + 8;
+				ending = text.indexOf('"', beginning);
+
+				carbs = text.substring(beginning, ending);
+
+				EditText servingEntry, carbEntry;					// the needed edit texts
+				servingEntry = allServingNameEntries.get( currentTag );    // Get the food name edittext
+				carbEntry = allCarbEntries.get( currentTag );		// Get the carb entry edittext
+				servingEntry.setText(foodName);						// Set the new food name
+				carbEntry.setText(carbs);							// Set the new carb amount
+
+				foodName = "";										//reset food name, carbs, and tag
+				carbs = "0";
+				currentTag = -1;
+
+				Log.d("NDB API Call","Successful api call");
+			}
+		}, new Response.ErrorListener()
+		{
+			public void onErrorResponse(VolleyError error) {
+				Log.e("NDB API Call","Error:"+error.getMessage());
+			}
+		});
+
+		stringRequest.setRetryPolicy(new DefaultRetryPolicy(0, -1, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+		queue.add(stringRequest);
+	}//end searchFoodItem(String)
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+			String selectedTag = data.getStringExtra(ViewFoodListingsActivity.RETURN_KEY);
+			//Log.i("Result", "Given selection: " + selectedTag);
+
+			if(!(selectedTag.equalsIgnoreCase("N/A")))
+			{
+				foodName = data.getStringExtra(ViewFoodListingsActivity.RETURN_KEY2);
+				findFoodNutrition(selectedTag);
+			} // make sure actual tag was given
+		} // ensure proper result code
+	} // onActivityResult
 } // class

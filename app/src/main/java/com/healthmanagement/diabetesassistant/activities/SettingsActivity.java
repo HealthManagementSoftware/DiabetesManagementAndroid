@@ -37,6 +37,7 @@ import android.view.View;
 import com.healthmanagement.diabetesassistant.R;
 import com.healthmanagement.diabetesassistant.services.PedometerService;
 import com.healthmanagement.diabetesassistant.services.SyncService;
+import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 import com.healthmanagement.diabetesassistant.singletons.WebClientConnectionSingleton;
 
 import java.net.MalformedURLException;
@@ -216,9 +217,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 	@Override
 	public void onBackPressed()
 	{
-		super.onBackPressed();
-
 		restartWebClient();
+		super.onBackPressed();
 
 	} // onBackPressed
 
@@ -253,7 +253,19 @@ public class SettingsActivity extends AppCompatPreferenceActivity
 		//				+ MainActivity.getPreferenceBoolean( getApplicationContext(),
 		//				SettingsActivity.PREF_SHOW_NOTIFICATION ) );
 
+
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // restartWebClient
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	/**

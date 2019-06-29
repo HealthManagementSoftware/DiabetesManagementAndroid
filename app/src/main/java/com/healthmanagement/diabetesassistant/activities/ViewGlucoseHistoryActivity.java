@@ -1,5 +1,6 @@
 package com.healthmanagement.diabetesassistant.activities;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,6 +19,7 @@ import com.healthmanagement.diabetesassistant.R;
 import com.healthmanagement.diabetesassistant.adapters.GlucoseCursorAdapter;
 import com.healthmanagement.diabetesassistant.contentproviders.DAContentProvider;
 import com.healthmanagement.diabetesassistant.db.DB;
+import com.healthmanagement.diabetesassistant.singletons.PatientSingleton;
 
 public class ViewGlucoseHistoryActivity extends AppCompatActivity
 		implements LoaderManager.LoaderCallbacks<Cursor>
@@ -50,7 +52,18 @@ public class ViewGlucoseHistoryActivity extends AppCompatActivity
 		TextView header4 = findViewById( R.id.header4 );
 		header4.setText( R.string.date );
 
+		if( !PatientSingleton.getInstance().hasSignedHIPAANotice() )
+			startSignHIPAANoticeActivity();
+
 	} // onCreate
+
+
+	private void startSignHIPAANoticeActivity()
+	{
+		Intent intent = new Intent( this, SignHIPAANoticeActivity.class );
+		startActivity( intent );
+
+	} // startSignHIPAANoticeActivity
 
 
 	public void setEmpty( View view )
